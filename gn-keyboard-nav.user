@@ -7,13 +7,14 @@
 // @include *://gonintendo.com/
 // @include *://gonintendo.com/?page*
 // @grant none
-// @version 1
+// @version 1.1
 // @run-at   document-start
 // ==/UserScript==
 
 //Script structure:
 //add event listeners, define the two functions
 //more functions to add if article scroll is implemented.
+//
 
 //page is stored in the url (ex: gonintendo.com/?page=2)
 //check if the url contains "page", if it does then retrieve page, if not then set it to 1
@@ -27,15 +28,20 @@ function getPage(){
   }
 }
 
-//goes a page forward, to older stories
+//goes a page ahead, to older stories
 function olderStories(event){
   var page = getPage();  
-  window.location.href = "https://gonintendo.com/?page=" + parseInt(page+1);
+  if(page === 1){
+    window.location.href = "https://gonintendo.com/?page=" + parseInt(page+1);
+    return;
+  }
+  //window.location.href = "https://gonintendo.com/?page=" + parseInt(page+1);
+  window.location.href = window.location.href.slice(0, window.location.href.indexOf("page")+4) + "=" + parseInt(page+1);
 }
 
 //goes a page back, to newer stories
 //for page 2, we want to return to the main page instead of attempting to go to page 1 (looks nicer that way)
-//nothing will happen if we're on the main page (1). (already at newest stories)
+//if we're on the main page, we won't attempt to go up a page. (already at newest stories)
 function newerStories(event){
   var page = getPage();
   if (page === 2){
@@ -46,14 +52,48 @@ function newerStories(event){
   }
 }
 
+//find the next story on the page, based on position on page.
+function nextStory(event){
+  
+  var arr = document.getElementsByClassName("content");
+  for(var i = 0; i < arr.length; i++){
+    //console.log(i + ": " + arr[i].offsetTop); //debug
+    if (arr[i].offsetTop > document.documentElement.scrollTop){
+      //console.log("Story " + i + " (Position: " + document.documentElement.scrollTop + ")"); //debug
+      document.documentElement.scrollTop = arr[i].offsetTop;
+      return;
+    }
+  }
+}
+
+//find the previous story on page, based on position on page
+function prevStory(event){
+  var arr = document.getElementsByClassName("content");
+  for(var i = arr.length-1; i >= 0; i--){
+    //console.log(i + ": " + arr[i].offsetTop); //debug
+    if (arr[i].offsetTop < document.documentElement.scrollTop){
+      //console.log("Story " + i + " (Position: " + document.documentElement.scrollTop + ")"); //debug
+      document.documentElement.scrollTop = arr[i].offsetTop;
+      return;
+    }
+  }
+}
+
 //main program: set up keypress event listener
 
+//$(document).bind('keypress', function(event) {
 document.addEventListener('keypress', function(event){
     if( event.keyCode === 37 && event.ctrlKey ) {
         olderStories(event);
     }
     else if( event.keyCode === 39 && event.ctrlKey){
       newerStories(event);
+    }
+    else if (event.key == "j"){
+      nextStory(event);
+    }
+    else if (event.key === "k"){
+      prevStory(event);
     }
 });
 
