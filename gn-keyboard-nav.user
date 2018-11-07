@@ -7,14 +7,14 @@
 // @include *://gonintendo.com/
 // @include *://gonintendo.com/?page*
 // @grant none
-// @version 1.1
+// @version 1.1.1
 // @run-at   document-start
 // ==/UserScript==
 
 //Script structure:
-//add event listeners, define the two functions
-//more functions to add if article scroll is implemented.
-//
+//define functions for navigation, then add an event listener to call them.
+
+//functions
 
 //page is stored in the url (ex: gonintendo.com/?page=2)
 //check if the url contains "page", if it does then retrieve page, if not then set it to 1
@@ -54,50 +54,59 @@ function newerStories(event){
 
 //find the next story on the page, based on position on page.
 function nextStory(event){
-  
   var arr = document.getElementsByClassName("content");
   for(var i = 0; i < arr.length; i++){
     //console.log(i + ": " + arr[i].offsetTop); //debug
     if (arr[i].offsetTop > document.documentElement.scrollTop){
       //console.log("Story " + i + " (Position: " + document.documentElement.scrollTop + ")"); //debug
-      document.documentElement.scrollTop = arr[i].offsetTop;
+      arr[i].scrollIntoView({
+        'behavior': 'smooth'
+      });
       return;
     }
   }
 }
 
 //find the previous story on page, based on position on page
+//since the scroll position is always greater than the position of the current story when scrolling upwards, we jump to the second story that has an offset less than the scroll position.
 function prevStory(event){
   var arr = document.getElementsByClassName("content");
+  var count = 1;
   for(var i = arr.length-1; i >= 0; i--){
     //console.log(i + ": " + arr[i].offsetTop); //debug
     if (arr[i].offsetTop < document.documentElement.scrollTop){
       //console.log("Story " + i + " (Position: " + document.documentElement.scrollTop + ")"); //debug
-      document.documentElement.scrollTop = arr[i].offsetTop;
-      return;
+      if(count <= 0){
+        arr[i].scrollIntoView({
+          'behavior': 'smooth'
+        });
+        return;
+      }
+      else{
+        count--;
+      }
     }
   }
 }
 
 //main program: set up keypress event listener
 
-//$(document).bind('keypress', function(event) {
 document.addEventListener('keypress', function(event){
-    if( event.keyCode === 37 && event.ctrlKey ) {
-        olderStories(event);
-    }
-    else if( event.keyCode === 39 && event.ctrlKey){
+  switch(event.key){
+    case "n":
+      olderStories(event);
+      break;
+    case "m":
       newerStories(event);
-    }
-    else if (event.key == "j"){
+      break;
+    case "j":
       nextStory(event);
-    }
-    else if (event.key === "k"){
+      break;
+    case "k":
       prevStory(event);
-    }
+      break;
+    case "i":
+      window.location.href = "https://gonintendo.com";
+      break;
+  }
 });
-
-//  left = 37
-//  up = 38
-//  right = 39
-//  down = 40
